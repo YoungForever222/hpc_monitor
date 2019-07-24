@@ -24,30 +24,35 @@ def monitor(firstname,nodenames,threshold=55):
     content = 'Now time is '+nowTimeDate+'\n'
     # One record text per day
     if not os.path.exists(logName):
-        with open(logName+'.csv') as f:
-            f.write("time,node,max_temp")
+        with open(logName+'.csv','w') as f:
+            f.write("time,node,max_temp\n")
     # For each node
     max_temperature = []
     for nodename in nodenames:
         cmdline = 'pdsh -w '+firstname+nodename+' sensors'
+        print(cmdline)
         sensors = os.popen(cmdline).read()
         sensors = re.sub('\s','',sensors)
+        print(sensors)
         temperature = []
         #取出所有内核温度
         for i in sensors.split(firstname+nodename+':Core'):
             for j in i.split('('):
-                if j[0] not in ['a','c','i','h']:
+                print(j)
+                if j[0] not in ['a','c','i','h','n']:
                     temperature.append(j[-7:-3])
         #取出最大内核温度
         temp = max(temperature)
-        max_temperature.append(temp)
+        #print(temperature)
+        max_temperature.append(temp[1:3])
+        #print(temp[1:3])
         #print(max_temperature[1:-1])
-        if int(temp) > threshold :
+        if int(temp[1:3]) > threshold :
             content+= 'IP is 192.168.211.1'+nodename+'\t'        \
                 +'The temperature is ' + temp +'\n'
         #写log文件
-        with open(logName+'.csv', "a+") as f:
-            f.write(nowTimeDate+','+firstname+nodename+','+temp+'\n')
+        with open(logName+'.csv', "a") as f:
+            f.write(nowTimeDate+','+firstname+nodename+','+temp[1:3]+'\n')
     # 定时提醒
     if datetime.datetime.now().strftime('%H') in ['0','3','6','9','12','18','21']:
         msg = MIMEText(content)
